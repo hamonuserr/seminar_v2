@@ -1,1 +1,1 @@
-# semivar_v2
+# seminar_v2
