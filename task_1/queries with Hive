@@ -1,0 +1,42 @@
+#Запрос №1
+Максимальная нон-фрауд транзация каждого пользователя (с учетом "хороших" валют)
+
+create table silver.max_non_fraud_true_transactions_per_user as 
+with cte as(
+select
+transaction_id,
+user_id,
+amount,
+row_number() over(partition by user_id order by amount desc) as rn
+from bronze.transactions_v2
+where is_fraud = 0 and currency in ('USD', 'EUR', 'RUB'))
+select 
+transaction_id,
+user_id,
+amount
+from cte
+where rn = 1
+
+--------------------------------------------------------------
+#Запрос №2
+Сумма и среднее значение на юзера без фрауд транзакций
+
+create table silver.total_sum_per_user as
+(select
+user_id,
+sum(amount) as total_sum,
+round(avg(amount), 2) as avg
+from bronze.transactions_v2
+where is_fraud = 0
+group by user_id)
+
+--------------------------------------------------------------
+#Запрос №3
+Количество мошеннических транзакций на юзера
+
+create table silver.fr_per_user as 
+(select 
+user_id,
+sum(is_fraud) cnt_fr
+from bronze.transactions_v2
+group by user_id)
