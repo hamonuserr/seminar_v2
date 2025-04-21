@@ -1,0 +1,47 @@
+#Запрос №1
+Агрегация по payment_status
+
+select
+payment_status,
+count(payment_status),
+round(sum(total_amount), 2) as sum,
+round(avg(total_amount), 2) as avg
+from default.orders
+group by payment_status
+
+--------------------------------------------------------------
+#Запрос №2
+Топ 3 покупателя по сумме заказа по каждому дню
+
+with cte as(select
+user_id,
+order_date,
+quantity,
+total_amount,
+row_number() over(partition by toDate(order_date) order by total_amount desc) as rn
+from (select
+oi.order_id,
+o.user_id,
+o.order_date,
+oi.quantity,
+o.total_amount
+from default.orders o
+join default.order_items oi on o.order_id = oi.order_id))
+select * from cte
+where rn between 1 and 3
+
+
+--------------------------------------------------------------
+#Запрос №3
+Информация по каждому дню
+
+select
+toDate(order_date) as date,
+sum(oi.quantity) as quantity,
+sum(oi.quantity * oi.product_price) as total_revenue,
+avg(oi.product_price) as avg_product_price
+from default.orders o
+join default.order_items oi on o.order_id = oi.order_id
+group by 1
+
+
